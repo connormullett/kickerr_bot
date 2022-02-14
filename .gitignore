@@ -1,3 +1,2 @@
 /target
 .env
-dotenv = "0.15.0"
