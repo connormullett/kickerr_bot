@@ -1,7 +1,5 @@
 use dotenv::dotenv;
-
 use reqwest::StatusCode;
-use serde::{Deserialize, Serialize};
 use teloxide::{dispatching2::UpdateFilterExt, prelude2::*};
 
 #[tokio::main]
