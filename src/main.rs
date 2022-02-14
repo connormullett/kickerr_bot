@@ -1,14 +1,8 @@
 use dotenv::dotenv;
 
+use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use teloxide::{dispatching2::UpdateFilterExt, prelude2::*};
-
-#[derive(Serialize, Deserialize)]
-struct CasResponse {
-    ok: bool,
-    description: Option<String>,
-    result: Option<String>,
-}
 
 #[tokio::main]
 async fn main() {
@@ -26,13 +20,23 @@ async fn run() {
         |msg: Message, bot: AutoSend<Bot>| async move {
             if let Some(users) = msg.new_chat_members() {
                 for user in users {
-                    let result: CasResponse =
-                        reqwest::get(format!("https://api.cas.chat/check?user_id={}", user.id))
-                            .await
-                            .unwrap()
-                            .json()
-                            .await
-                            .unwrap();
+                    let id = user.id;
+                    let result = reqwest::get(format!("https://api.cas.chat/check?user_id={}", id))
+                        .await
+                        .unwrap();
+                    if result.status() != StatusCode::NOT_FOUND {
+                        bot.ban_chat_member(msg.chat_id(), id).await.unwrap();
+                        let name = match user.username.clone() {
+                            Some(value) => value,
+                            None => String::from("unknown"),
+                        };
+                        bot.send_message(
+                            msg.chat_id(),
+                            format!("user '{}' with id {} has been CAS banned", name, id),
+                        )
+                        .await
+                        .unwrap();
+                    }
                 }
             }
             respond(())
